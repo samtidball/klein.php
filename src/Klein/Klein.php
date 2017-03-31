@@ -585,6 +585,7 @@ class Klein
 
                         // Handle our response callback
                         try {
+                            $this->handleRouteMiddleware($route, $matched, $methods_matched);
                             $this->handleRouteCallback($route, $matched, $methods_matched);
 
                         } catch (DispatchHaltedException $e) {
@@ -877,6 +878,47 @@ class Klein
         // Handle the callback
         $returned = call_user_func(
             $route->getCallback(), // Instead of relying on the slower "invoke" magic
+            $this->request,
+            $this->response,
+            $this->service,
+            $this->app,
+            $this, // Pass the Klein instance
+            $matched,
+            $methods_matched
+        );
+
+        if ($returned instanceof AbstractResponse) {
+            $this->response = $returned;
+        } else {
+            // Otherwise, attempt to append the returned data
+            try {
+                $this->response->append($returned);
+            } catch (LockedResponseException $e) {
+                // Do nothing, since this is an automated behavior
+            }
+        }
+    }
+
+    /**
+     * Handle a route's middleware callback
+     *
+     * This handles common exceptions and their output
+     * to keep the "dispatch()" method DRY
+     *
+     * @param Route $route
+     * @param RouteCollection $matched
+     * @param array $methods_matched
+     * @return void
+     */
+    protected function handleRouteMiddleware(Route $route, RouteCollection $matched, array $methods_matched)
+    {
+        if(null === $route->getMiddleware()){
+            return;
+        }
+
+        // Handle the callback
+        $returned = call_user_func(
+            $route->getMiddleware(), // Instead of relying on the slower "invoke" magic
             $this->request,
             $this->response,
             $this->service,

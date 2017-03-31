@@ -78,6 +78,12 @@ class Route
      */
     protected $name;
 
+    /**
+     * The name of the middleware to run
+     *
+     * @type array
+     */
+    protected $middleware=null;
 
     /**
      * Methods
@@ -125,6 +131,34 @@ class Route
         }
 
         $this->callback = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Get the middleware callback
+     *
+     * @return callable
+     */
+    public function getMiddleware()
+    {
+        return $this->middleware;
+    }
+
+    /**
+     * Set the middleware callback
+     *
+     * @param callable $callback
+     * @throws InvalidArgumentException If the callback isn't a callable
+     * @return Route
+     */
+    public function setMiddleware($callback)
+    {
+        if (!is_callable($callback)) {
+            throw new InvalidArgumentException('Expected a callable. Got an uncallable '. gettype($callback));
+        }
+
+        $this->middleware = $callback;
 
         return $this;
     }
